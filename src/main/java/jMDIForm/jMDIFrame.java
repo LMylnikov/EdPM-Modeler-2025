@@ -1308,7 +1308,7 @@ public class jMDIFrame extends JInternalFrame {
                                 || //первая фигура - S, вторая фигура - V ИЛИ
                                 (first.getClass().equals(V.class) && second.getClass().equals(R.class) && findLinkedFigToFig("V",second.getNameF()))
                                 || //первая фигура - V, вторая фигура - R ИЛИ
-                                (first.getClass().equals(R.class) && second.getClass().equals(NV.class) && findLinkedFigToFig("R",second.getNameF()))
+                                (first.getClass().equals(R.class) && second.getClass().equals(NV.class))
                                 || //первая фигура - R, вторая фигура - NV ИЛИ
                                 (first.getClass().equals(R.class) && second.getClass().equals(V.class) && findLinkedFigToFig("R",second.getNameF()))
                                 || //первая фигура - R, вторая фигура - V ИЛИ
