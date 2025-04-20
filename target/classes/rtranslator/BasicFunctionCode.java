@@ -155,24 +155,23 @@ public class BasicFunctionCode {
 "# W - длительность обработки в шагах\n" +
 "\n" +
 "XES<-function(R){\n" +
-"  Df<-data.frame(ID=0, V=\"V\", I=0, W=0) \n" +
+"  Df<-data.frame(ID=0, V=\"V\", I=0, W=0)\n" +
 "  N1<-length(R$I)\n" +
 "  for (i in 1:N1){\n" +
-"    Vec<-list_c(R$ID_Out[i])\n" +
-"    N2<-length(Vec)\n" +
-"    if (N2>0 & R$R[i]>0){\n" +
+"    N2<-length(R$ID_Out[[i]])\n" +
+"    if (N2>1 & R$R[i]>0){\n" +
+"      Vec<-list_c(R$ID_Out[i])\n" +
 "      for (j in 1:N2){\n" +
-"        if (Vec[j]>0){\n" +
-"          Df_0<-data.frame(ID=Vec[j], V=R$V[i], I=i, W=R$V_W[i-1])\n" +
-"          Df<-rbind(Df,Df_0)\n" +
-"        }\n" +
+"          if (Vec[j]>0){\n" +
+"            Df_0<-data.frame(ID=Vec[j], V=R$V[i], I=i, W=R$V_W[i-1])\n" +
+"            Df<-rbind(Df,Df_0)\n" +
+"         }\n" +
 "      }\n" +
 "    }\n" +
 "  }\n" +
 "  Df<-Df[-1,]\n" +
 "  XES<-Df\n" +
 "}\n" +
-"\n" +
 "\n" +
 "# Объединение двух последовательностей типа выдаваемого блоком S по аддитивному закону\n" +
 "Add<-function(A1, A2){\n" +
