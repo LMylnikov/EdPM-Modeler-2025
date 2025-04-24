@@ -5,6 +5,7 @@
 package jMDIForm;
 
 import javax.swing.ButtonGroup;
+import javax.swing.JOptionPane;
 
 /**
  *
@@ -168,12 +169,27 @@ public class ChoiceMethodPageRankDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_AccuracyRadioButtonActionPerformed
 
     private void OKButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_OKButtonActionPerformed
-        if (selectedMethod == 1)
-            iterations = Integer.parseInt(TextPane.getText());
-        else if (selectedMethod == 2)
-            accuracy = Double.parseDouble(TextPane.getText());
         d = Double.parseDouble(jTextPane1.getText());
-        dispose();
+        if (d >= 1 || d <= 0)
+            JOptionPane.showMessageDialog(this, "Incorrect input damping coefficient! Enter number between 0 and 1.", "damping coefficient", JOptionPane.WARNING_MESSAGE);
+        else {
+            if (selectedMethod == 1) {
+                iterations = Integer.parseInt(TextPane.getText());
+                if (iterations < 1)
+                    JOptionPane.showMessageDialog(this, "Incorrect input! Enter natural number.", "Choise method", JOptionPane.WARNING_MESSAGE);
+                else {
+                    dispose();
+                }
+            }
+            else if (selectedMethod == 2) {
+                accuracy = Double.parseDouble(TextPane.getText());
+                if (accuracy >= 1 || accuracy <= 0)
+                    JOptionPane.showMessageDialog(this, "Incorrect input! Enter number between 0 and 1.", "Choise method", JOptionPane.WARNING_MESSAGE);
+                else {
+                    dispose();
+                }
+            }
+        }
     }//GEN-LAST:event_OKButtonActionPerformed
 
     private void CancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CancelButtonActionPerformed
