@@ -2027,27 +2027,12 @@ public class mdi extends javax.swing.JFrame {
     }//GEN-LAST:event_jChangeTextColorSActionPerformed
 
     private void ProductivityAnalyzesStaticMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ProductivityAnalyzesStaticMenuItemActionPerformed
-        var frame = new PageRankFrame();
-        var dialog = new ChoiceMethodPageRankDialog(this, true);
-        dialog.setLocation(this.getWidth()/2-dialog.getWidth()/2, this.getHeight()/2-dialog.getHeight()/2);
-        dialog.show();
-        double[][] matrix;
-        double d = dialog.d;
-        switch (dialog.selectedMethod()) {
-            case 1:
-                matrix = ((jMDIFrame)(jDesktopPane.getSelectedFrame())).PageRank(dialog.getNumberOfIterations(), 0, d);
-                break;
-            case 2:
-                matrix = ((jMDIFrame)(jDesktopPane.getSelectedFrame())).PageRank(0, dialog.getAccuracy(), d);
-                break;
-            default:
-                return;
+        try {
+            var dialog = new ChoiceMethodPageRankDialog(this, true, true, (jMDIFrame)(jDesktopPane.getSelectedFrame()));
+        } catch (Exception ex) {
+                ex.printStackTrace();
         }
-        String[] names = ((jMDIFrame)(jDesktopPane.getSelectedFrame())).GetNames();
-        
-        frame.displayMatrix(matrix, names);
-        frame.setLocation(this.getWidth()/2-frame.getWidth()/2, this.getHeight()/2-frame.getHeight()/2);
-        frame.show();
+             
     }//GEN-LAST:event_ProductivityAnalyzesStaticMenuItemActionPerformed
 
     private void jMenuItem2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem2ActionPerformed
@@ -2059,78 +2044,11 @@ public class mdi extends javax.swing.JFrame {
     }//GEN-LAST:event_jMenuItem2ActionPerformed
 
     private void ProductivityAnalyzesDynamicMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ProductivityAnalyzesDynamicMenuItemActionPerformed
-        OpenChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
-        OpenChooser.setCurrentDirectory(new File("."));
-        OpenChooser.setFileFilter(new FileNameExtensionFilter("XES", "XES", "xes", "csv"));
-        int option = OpenChooser.showOpenDialog(this);
-        String[][] elements;
-        if(option == JFileChooser.APPROVE_OPTION) {
-            try {
-                Path path = Path.of(OpenChooser.getSelectedFile().getAbsolutePath());
-                List<String> lines = Files.readAllLines(path);
-                
-                int i = 0;
-                
-                Map<Integer, Integer> stepsDictionary = new LinkedHashMap<Integer,Integer>();
-                Map<String, Integer> dictionary = new LinkedHashMap<String,Integer>();
-                
-                elements = new String[lines.size()][5];
-                for (String line : lines) {
-                    elements[i] = line.split("\\s*,\\s*");
-
-                    for (int j = 0; j < 5; j++) {
-                        elements[i][j] = elements[i][j].replaceAll("^\"|\"$", "");
-                    }
-                    
-                    if(i != 0) { //Заполнение словарей блоков V и шагов поступления
-                        dictionary.putIfAbsent(elements[i][2], dictionary.size());
-                        stepsDictionary.putIfAbsent(Integer.valueOf(elements[i][3]), stepsDictionary.size());
-                    }
-                    
-                    i++;
-                }
-                
-                i = 0;
-                String[] names = new String[dictionary.keySet().size()];
-                for (String element : dictionary.keySet()) {
-                    names[i] = element;
-                    i++;
-                }
-                
-                double[][] matrix = new double[dictionary.size()][stepsDictionary.size()];
-                
-                for (i = 1; i < elements.length; i++) { //заполнение матрицы связей
-                    int row = dictionary.get(elements[i][2]);
-                    int col = stepsDictionary.get(Integer.valueOf(elements[i][3]));
-                    matrix[row][col] += Integer.valueOf(elements[i][4]);
-                }
-                
-                
-                
-                var dialog = new ChoiceMethodPageRankDialog(this, true);
-                dialog.setLocation(this.getWidth()/2-dialog.getWidth()/2, this.getHeight()/2-dialog.getHeight()/2);
-                dialog.show();
-                double d = dialog.d;
-                switch (dialog.selectedMethod()) {
-                    case 1:
-                        matrix = DynamicPageRank(dialog.getNumberOfIterations(), 0, d, matrix);
-                        break;
-                   case 2:
-                        matrix = DynamicPageRank(0, dialog.getAccuracy(), d, matrix);
-                        break;
-                    default:
-                        return;
-                }
-                
-                var frame = new PageRankFrame();
-                frame.displayMatrix(matrix, names);
-                frame.setLocation(this.getWidth()/2-frame.getWidth()/2, this.getHeight()/2-frame.getHeight()/2);
-                frame.show();
-            } catch (Exception ex) {
+        try {
+            var dialog = new ChoiceMethodPageRankDialog(this, true, false, null);
+        } catch (Exception ex) {
                 ex.printStackTrace();
-            }
-        }
-        
+        }        
     }//GEN-LAST:event_ProductivityAnalyzesDynamicMenuItemActionPerformed
 
     private void ToolsMenuSelected(javax.swing.event.MenuEvent evt) {//GEN-FIRST:event_ToolsMenuSelected
@@ -2140,108 +2058,7 @@ public class mdi extends javax.swing.JFrame {
     private void ProductivityAnalyzesMenuMenuSelected(javax.swing.event.MenuEvent evt) {//GEN-FIRST:event_ProductivityAnalyzesMenuMenuSelected
         ProductivityAnalyzesStaticMenuItem.setEnabled(jDesktopPane.getSelectedFrame() != null);
     }//GEN-LAST:event_ProductivityAnalyzesMenuMenuSelected
-    
-    private double[][] DynamicPageRank (int iterations, double accuracy, double d, double[][] connectionMatrix) {
-        int rowSize = connectionMatrix.length;
-        int colSize = connectionMatrix[0].length;
-        List<double[]> history = new ArrayList<>();
-        
-        double[] stepsVector = new double[colSize];
-        double[] vector = new double[rowSize];
-        
-        for (int i = 0; i < vector.length; i++) {
-            vector[i] = 1.0;
-        }
-        for (int i = 0; i < stepsVector.length; i++) {
-            stepsVector[i] = 1.0;
-        }
-        
-        for (int col = 0; col < colSize; col++) {
-            int colSum = 0;
-            for (int row = 0; row < rowSize; row++) {
-                colSum += connectionMatrix[row][col];
-            }
-            for (int row = 0; row < rowSize; row++) {
-                connectionMatrix[row][col] = connectionMatrix[row][col]/colSum*d+(1-d)/rowSize;
-            }
-        }
-        
-        
-        if (iterations > 0) {
-            for (int iteration = 0; iteration < iterations; iteration++) {
-                double minVector = Double.MAX_VALUE;
-                double[] tempStepsVector = new double[colSize];
-                double[] tempVector = new double[rowSize];
-                for (int row = 0; row < rowSize; row++) {
-                    for (int col = 0; col < colSize; col++) {
-                        tempVector[row] += connectionMatrix[row][col]*stepsVector[col];
-                    }
-                }
-                
-                vector = tempVector;
-                for (double element : vector)
-                    minVector = Math.min(element, minVector);
-                
-                for (int col = 0; col < colSize; col++) {
-                    for (int row = 0; row < rowSize; row++) {
-                        tempStepsVector[col] += connectionMatrix[row][col]*vector[row];
-                    }
-                }
-                stepsVector = tempStepsVector;
-                
-                double[] array = new double[vector.length];
-                for (int i = 0; i < vector.length; i++) {
-                    array[i] = Math.sqrt(vector[i] / minVector);
-                } 
-                   
-                history.add(array);
-            } 
-        } else {
-            double delta;
-            double[] prefArray = new double[vector.length];
-            do {
-                delta = Double.MIN_VALUE;
-                double minVector = Double.MAX_VALUE;
-                double[] tempStepsVector = new double[colSize];
-                double[] tempVector = new double[rowSize];
-                for (int row = 0; row < rowSize; row++) {
-                    for (int col = 0; col < colSize; col++) {
-                        tempVector[row] += connectionMatrix[row][col]*stepsVector[col];
-                    }
-                }
-                
-                vector = tempVector;
-                for (double element : vector)
-                    minVector = Math.min(element, minVector);
-                
-                for (int col = 0; col < colSize; col++) {
-                    for (int row = 0; row < rowSize; row++) {
-                        tempStepsVector[col] += connectionMatrix[row][col]*vector[row];
-                    }
-                }
-                stepsVector = tempStepsVector;
-                
-                double[] array = new double[vector.length];
-                for (int i = 0; i < vector.length; i++) {
-                    array[i] = Math.sqrt(vector[i] / minVector);
-                } 
-                
-                for (int i = 0; i < array.length; i++) {
-                    delta = Math.max(delta, Math.abs(array[i]-prefArray[i]));
-                }
-                prefArray = array;
-                history.add(array);
-            } while (delta > accuracy);
-        }
-        
-        double[][] matrix = new double[history.size()][colSize];
-        for (int i = 0; i < history.size(); i++) {
-            matrix[i] = history.get(i);
-        }
-        
-        return matrix;
-    }
-    
+     
     public void enabledChanger(){ //Выключение ХЕС настроек при выключении построения диаграмм
         if (boxIsPlot.isSelected()){
             boxIsXES.setEnabled(true);

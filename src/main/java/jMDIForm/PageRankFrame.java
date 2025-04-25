@@ -7,7 +7,9 @@ package jMDIForm;
 import java.awt.Button;
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import javax.swing.JDesktopPane;
@@ -30,8 +32,11 @@ public class PageRankFrame extends javax.swing.JFrame {
     }
     
     Boolean isCalculation = false;
+    Boolean isBlocksSignificance = true;
     DefaultTableModel ranks;
     DefaultTableModel calculations;
+    DefaultTableModel stepsRanks;
+    DefaultTableModel stepsCalculations;
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -45,6 +50,7 @@ public class PageRankFrame extends javax.swing.JFrame {
         SwitchButton = new javax.swing.JButton();
         jScrollPane4 = new javax.swing.JScrollPane();
         PageRankTable = new javax.swing.JTable();
+        stepsSignificanceButton = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setPreferredSize(new java.awt.Dimension(900, 500));
@@ -69,12 +75,21 @@ public class PageRankFrame extends javax.swing.JFrame {
         ));
         jScrollPane4.setViewportView(PageRankTable);
 
+        stepsSignificanceButton.setText("Show steps significance");
+        stepsSignificanceButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                stepsSignificanceButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap()
+                .addComponent(stepsSignificanceButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(SwitchButton)
                 .addContainerGap())
             .addComponent(jScrollPane4)
@@ -84,7 +99,9 @@ public class PageRankFrame extends javax.swing.JFrame {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 265, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(SwitchButton)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(SwitchButton)
+                    .addComponent(stepsSignificanceButton))
                 .addContainerGap())
         );
 
@@ -93,19 +110,49 @@ public class PageRankFrame extends javax.swing.JFrame {
 
     private void SwitchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SwitchButtonActionPerformed
         isCalculation = !isCalculation;
-        if (isCalculation)
-        {
-            SwitchButton.setText("Show ranks");
-            PageRankTable.setModel(calculations);
-            //this.setSize(900, 500);
-        }
-        else
-        {
-            SwitchButton.setText("Show calculations");
-            PageRankTable.setModel(ranks);
-            //this.setSize(250, 450);
+        if (isBlocksSignificance) {
+            if (isCalculation)
+            {
+                SwitchButton.setText("Show ranks");
+                PageRankTable.setModel(calculations);
+            }
+            else
+            {
+                SwitchButton.setText("Show calculations");
+                PageRankTable.setModel(ranks);
+            }
+        } else {
+            if (isCalculation)
+            {
+                SwitchButton.setText("Show ranks");
+                PageRankTable.setModel(stepsCalculations);
+            }
+            else
+            {
+                SwitchButton.setText("Show calculations");
+                PageRankTable.setModel(stepsRanks);
+            }
         }
     }//GEN-LAST:event_SwitchButtonActionPerformed
+
+    private void stepsSignificanceButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stepsSignificanceButtonActionPerformed
+        if (isBlocksSignificance) {
+            stepsSignificanceButton.setText("Show blocks significance");
+            if (isCalculation) {
+                PageRankTable.setModel(stepsCalculations);
+            } else {
+                PageRankTable.setModel(stepsRanks);
+            }
+        } else {
+            stepsSignificanceButton.setText("Show steps significance");
+            if (isCalculation) {
+                PageRankTable.setModel(calculations);
+            } else {
+                PageRankTable.setModel(ranks);
+            }
+        }
+        isBlocksSignificance = !isBlocksSignificance;
+    }//GEN-LAST:event_stepsSignificanceButtonActionPerformed
 
     /**
      * @param args the command line arguments
@@ -184,10 +231,346 @@ public class PageRankFrame extends javax.swing.JFrame {
         
         PageRankTable.setModel(ranks);
     }
+    
+    public void displayStepsMatrix(double[][] matrix, String[] columnNames) {
+        String[][] tableData = new String[matrix.length][matrix[0].length];
+        for (int i = 0; i < matrix.length; i++) {
+            for (int j = 0; j < matrix[i].length; j++) {
+                tableData[i][j] = String.format("%.6f", matrix[i][j]);
+            }
+        }
+        
+        stepsCalculations = new DefaultTableModel(tableData, columnNames);
+        
+        String[][] rankMatrix = new String[columnNames.length][2];
+        String[] names = new String[] {"Name", "Rank"};
+        
+        List<Map.Entry<String, Double>> moduls = new ArrayList<>();
+        String[] values = new String[columnNames.length];
+        for (int i = 0; i < values.length; i++)
+        {
+            values[i] = tableData[tableData.length-1][i].replace(",", ".");
+        }
+        for (int i = 0; i < columnNames.length; i++)
+        {
+            moduls.add(new AbstractMap.SimpleEntry<String, Double>(columnNames[i], Double.valueOf(values[i])));
+        }
+        
+        moduls.sort(Comparator.comparingDouble(Map.Entry::getValue));
+        moduls = moduls.reversed();
+        
+        rankMatrix[0][0] = moduls.get(0).getKey();
+        rankMatrix[0][1] = "1";
+        int rank = 1;
+        for (int i = 1; i < columnNames.length; i++)
+        {
+            if (!moduls.get(i).getValue().toString().equals(moduls.get(i-1).getValue().toString()))
+                rank++;
+            rankMatrix[i][0] = moduls.get(i).getKey();
+            rankMatrix[i][1] = String.valueOf(rank);
+        }
+        
+        stepsRanks = new DefaultTableModel(rankMatrix, names);
+    }
+    
+    public void StaticPageRank(jMDIFrame MDIFrame, int selectedMethod, int iterations, double accuracy, double d) {
+        //получение матрицы значений
+        double[][] matrix;
+        switch (selectedMethod) {
+            case 1:
+                matrix = MDIFrame.PageRank(iterations, 0, d);
+                break;
+            case 2:
+                matrix = MDIFrame.PageRank(0, accuracy, d);
+                break;
+            default:
+                return;
+        }
+        
+        //получение имен
+        String[] names = MDIFrame.GetNames();
+        
+        stepsSignificanceButton.setVisible(false);
+        
+        displayMatrix(matrix, names);
+    }
+    
+    
+    Map<Integer, Integer> stepsDictionary = new LinkedHashMap<Integer,Integer>();
+    Map<String, Integer> dictionary = new LinkedHashMap<String,Integer>();
+    String[][] elements;
+            
+    public void DynamicPageRank(List<String> lines, int selectedMethod, int iterations, double accuracy, double d) {
+        //заполнение словарей 
+        FillDictionaries(lines);
+        
+        //получение имен блоков и моментов времени
+        String[] names = GetXesNames(dictionary);
+        String[] stepsNames = GetXesStepsNames(stepsDictionary);
+        
+        //заполнение матрицы связей
+        double[][] matrix = FillConnectionMatrix(elements);
+        
+        //расчет значимости блоков
+        switch (selectedMethod) {
+                    case 1:
+                        CalculateDynamicPageRank(iterations, 0, d, matrix);
+                        break;
+                   case 2:
+                        CalculateDynamicPageRank(0, accuracy, d, matrix);
+                        break;
+                    default:
+                        return;
+                }
+        
+        //вывод таблицы
+        displayMatrix(blocksMatrix, names);
+        
+        if (stepsMatrix[0].length < 20)
+            displayStepsMatrix(stepsMatrix, stepsNames);
+        else {
+            double sturges = Sturges(stepsDictionary);
+            displayStepsMatrix(Interval(sturges), GetNamesOfIntervals(sturges));
+        }
+    }
+    
+    private void FillDictionaries(List<String> lines) {
+        elements = new String[lines.size()][5];
+        int i = 0;
+        
+        for (String line : lines) {
+            elements[i] = line.split("\\s*,\\s*");
+
+            for (int j = 0; j < 5; j++) {
+                elements[i][j] = elements[i][j].replaceAll("^\"|\"$", "");
+            }
+
+            if(i != 0) { //Заполнение словарей блоков V и шагов поступления
+                dictionary.putIfAbsent(elements[i][2], dictionary.size());
+                stepsDictionary.putIfAbsent(Integer.valueOf(elements[i][3]), stepsDictionary.size());
+            }
+
+            i++;
+        }
+    }
+    
+    private String[] GetXesNames(Map<String, Integer> dictionary) {
+       int i = 0;
+        String[] names = new String[dictionary.keySet().size()];
+        for (String element : dictionary.keySet()) {
+            names[i] = element;
+            i++;
+        }
+        return names;
+    }
+    
+    private String[] GetXesStepsNames(Map<Integer, Integer> dictionary) {
+       int i = 0;
+        String[] names = new String[dictionary.keySet().size()];
+        for (int element : dictionary.keySet()) {
+            names[i] = String.valueOf(element);
+            i++;
+        }
+        return names;
+    }
+    
+    private double[][] FillConnectionMatrix(String[][] elements){
+        double[][] matrix = new double[dictionary.size()][stepsDictionary.size()];
+                
+        for (int i = 1; i < elements.length; i++) { //заполнение матрицы связей
+            int row = dictionary.get(elements[i][2]);
+            int col = stepsDictionary.get(Integer.valueOf(elements[i][3]));
+            matrix[row][col] += Integer.valueOf(elements[i][4]);
+        }
+        return matrix;
+    }
+    
+    double[][] blocksMatrix, stepsMatrix;
+    private void CalculateDynamicPageRank(int iterations, double accuracy, double d, double[][] connectionMatrix) {
+        int rowSize = connectionMatrix.length;
+        int colSize = connectionMatrix[0].length;
+        List<double[]> history = new ArrayList<>();
+        List<double[]> stepsHistory = new ArrayList<>();
+        
+        double[] stepsVector = new double[colSize];
+        double[] vector = new double[rowSize];
+        
+        //инициализация векторов
+        for (int i = 0; i < vector.length; i++) {
+            vector[i] = 1.0;
+        }
+        for (int i = 0; i < stepsVector.length; i++) {
+            stepsVector[i] = 1.0;
+        }
+        
+        //Обработка матрицы
+        for (int col = 0; col < colSize; col++) {
+            int colSum = 0;
+            for (int row = 0; row < rowSize; row++) {
+                colSum += connectionMatrix[row][col];
+            }
+            for (int row = 0; row < rowSize; row++) {
+                connectionMatrix[row][col] = connectionMatrix[row][col]/colSum*d+(1-d)/rowSize;
+            }
+        }
+        
+        
+        if (iterations > 0) {
+            for (int iteration = 0; iteration < iterations; iteration++) {
+                double minVector = Double.MAX_VALUE;
+                double minStepsVector = Double.MAX_VALUE;
+                double[] tempStepsVector = new double[colSize];
+                double[] tempVector = new double[rowSize];
+                for (int row = 0; row < rowSize; row++) {
+                    for (int col = 0; col < colSize; col++) {
+                        tempVector[row] += connectionMatrix[row][col]*stepsVector[col];
+                    }
+                }
+                
+                vector = tempVector;
+                for (double element : vector)
+                    minVector = Math.min(element, minVector);
+                
+                for (int col = 0; col < colSize; col++) {
+                    for (int row = 0; row < rowSize; row++) {
+                        tempStepsVector[col] += connectionMatrix[row][col]*vector[row];
+                    }
+                }
+                stepsVector = tempStepsVector;
+                for (double element : stepsVector)
+                    minStepsVector = Math.min(element, minStepsVector);
+                
+                double[] array = new double[vector.length];
+                
+                for (int i = 0; i < vector.length; i++) {
+                    array[i] = Math.sqrt(vector[i] / minVector);
+                } 
+                   
+                history.add(array);
+                
+                double[] stepsArray = new double[stepsVector.length];
+                for (int i = 0; i < stepsVector.length; i++) {
+                    stepsArray[i] = Math.sqrt(stepsVector[i] / minStepsVector);
+                } 
+                   
+                stepsHistory.add(stepsArray);
+            } 
+        } else {
+            double delta;
+            double[] prefArray = new double[vector.length];
+            do {
+                delta = Double.MIN_VALUE;
+                double minVector = Double.MAX_VALUE;
+                double minStepsVector = Double.MAX_VALUE;
+                double[] tempStepsVector = new double[colSize];
+                double[] tempVector = new double[rowSize];
+                for (int row = 0; row < rowSize; row++) {
+                    for (int col = 0; col < colSize; col++) {
+                        tempVector[row] += connectionMatrix[row][col]*stepsVector[col];
+                    }
+                }
+                
+                vector = tempVector;
+                for (double element : vector)
+                    minVector = Math.min(element, minVector);
+                
+                for (int col = 0; col < colSize; col++) {
+                    for (int row = 0; row < rowSize; row++) {
+                        tempStepsVector[col] += connectionMatrix[row][col]*vector[row];
+                    }
+                }
+                stepsVector = tempStepsVector;
+                
+                for (double element : stepsVector)
+                    minStepsVector = Math.min(element, minStepsVector);
+                
+                double[] array = new double[vector.length];
+                for (int i = 0; i < vector.length; i++) {
+                    array[i] = Math.sqrt(vector[i] / minVector);
+                } 
+                
+                for (int i = 0; i < array.length; i++) {
+                    delta = Math.max(delta, Math.abs(array[i]-prefArray[i]));
+                }
+                prefArray = array;
+                history.add(array);
+                
+                double[] stepsArray = new double[stepsVector.length];
+                for (int i = 0; i < stepsVector.length; i++) {
+                    stepsArray[i] = Math.sqrt(stepsVector[i] / minStepsVector);
+                } 
+                   
+                stepsHistory.add(stepsArray);
+            } while (delta > accuracy);
+        }
+        
+        blocksMatrix = new double[history.size()][colSize];
+        for (int i = 0; i < history.size(); i++) {
+            blocksMatrix[i] = history.get(i);
+        }
+        
+        stepsMatrix = new double[stepsHistory.size()][rowSize];
+        for (int i = 0; i < stepsHistory.size(); i++) {
+            stepsMatrix[i] = stepsHistory.get(i);
+        }
+        
+        
+    }
+    
+    private double Sturges(Map<Integer, Integer> dictionary) {
+        int max = (int) dictionary.keySet().toArray()[dictionary.size()-1];
+        int min = (int) dictionary.keySet().toArray()[0];
+        double sturges = (max-min)/(1+3.32*Math.log10(dictionary.size()));
+        return sturges;
+    }
+    
+    
+    private double[][] Interval(double sturges) {
+        List<Integer> realTimes = new ArrayList<>(stepsDictionary.keySet());
+        Collections.sort(realTimes);
+
+        int min = realTimes.get(0);
+        int max = realTimes.get(realTimes.size() - 1);
+        int numberOfIntervals = (int) Math.ceil((max - min + 1) / sturges);
+
+        double[][] intervals = new double[stepsMatrix.length][numberOfIntervals];
+
+        for (int realTime : realTimes) {
+            int timeIndex = stepsDictionary.get(realTime);
+            int intervalIndex = (int) ((realTime - min) / sturges);
+            if (intervalIndex >= numberOfIntervals) intervalIndex = numberOfIntervals - 1;
+
+            for (int step = 0; step < stepsMatrix.length; step++) {
+                intervals[step][intervalIndex] += stepsMatrix[step][timeIndex];
+            }
+        }
+
+        return intervals;
+    }
+
+    private String[] GetNamesOfIntervals(double sturges) {
+        List<Integer> realTimes = new ArrayList<>(stepsDictionary.keySet());
+        Collections.sort(realTimes);
+
+        int min = realTimes.get(0);
+        int max = realTimes.get(realTimes.size() - 1);
+        int numberOfIntervals = (int) Math.ceil((max - min + 1) / sturges);
+
+        String[] names = new String[numberOfIntervals];
+        for (int i = 0; i < numberOfIntervals; i++) {
+            int from = (int) (min + i * sturges);
+            int to = (int) Math.min(max, (min + (i + 1) * sturges - 1));
+            names[i] = from + " - " + to;
+        }
+
+        return names;
+    }
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTable PageRankTable;
     private javax.swing.JButton SwitchButton;
     private javax.swing.JScrollPane jScrollPane4;
+    private javax.swing.JButton stepsSignificanceButton;
     // End of variables declaration//GEN-END:variables
 }
