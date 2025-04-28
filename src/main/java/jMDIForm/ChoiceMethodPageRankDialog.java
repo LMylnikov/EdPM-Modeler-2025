@@ -4,8 +4,14 @@
  */
 package jMDIForm;
 
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
 import javax.swing.ButtonGroup;
+import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 /**
  *
@@ -24,6 +30,17 @@ public class ChoiceMethodPageRankDialog extends javax.swing.JDialog {
         super(parent, modal);
         initComponents();
     }
+    
+    public ChoiceMethodPageRankDialog(java.awt.Frame parent, boolean modal, boolean isStatic, jMDIFrame MDIFrame) {
+        super(parent, modal);
+        initComponents();
+        this.setLocationRelativeTo(null);
+        this.show();
+        if (isStatic)
+            StaticPageRank(MDIFrame);
+        else
+            DynamicPageRank();
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -34,6 +51,7 @@ public class ChoiceMethodPageRankDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        OpenChooser = new javax.swing.JFileChooser();
         jLabel1 = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
         TextPane = new javax.swing.JTextPane();
@@ -257,12 +275,50 @@ public class ChoiceMethodPageRankDialog extends javax.swing.JDialog {
         iterations = 0;
         return accuracy;
     }
+    private void StaticPageRank(jMDIFrame MDIFrame) {
+        //передача параметров в PageRankFrame
+        PageRankFrame frame = new PageRankFrame();
+        if (selectedMethod != 0) {
+            frame.StaticPageRank(MDIFrame, selectedMethod, iterations, accuracy, d);
+            frame.setLocationRelativeTo(null);
+            frame.show();
+        }
+    }
+    
+    private void DynamicPageRank() {
+        //открытие XES файла
+        List<String> lines = ReadXesFile();
+        //передача параметров в PageRankFrame
+        PageRankFrame frame = new PageRankFrame();
+        if (selectedMethod != 0) {
+            frame.DynamicPageRank(lines, selectedMethod, iterations, accuracy, d);
+            frame.setLocationRelativeTo(null);
+            frame.show();
+        }
+    }
+    
+    private List<String> ReadXesFile() {
+        OpenChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+        OpenChooser.setCurrentDirectory(new File("."));
+        OpenChooser.setFileFilter(new FileNameExtensionFilter("XES", "XES", "xes", "csv"));
+        int option = OpenChooser.showOpenDialog(this);
+        List<String> lines = null;
+        if(option == JFileChooser.APPROVE_OPTION)
+            try {
+                Path path = Path.of(OpenChooser.getSelectedFile().getAbsolutePath());
+                lines = Files.readAllLines(path);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        return lines;
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JRadioButton AccuracyRadioButton;
     private javax.swing.JButton CancelButton;
     private javax.swing.JRadioButton IterationRadioButton;
     private javax.swing.JButton OKButton;
+    private javax.swing.JFileChooser OpenChooser;
     private javax.swing.JTextPane TextPane;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
