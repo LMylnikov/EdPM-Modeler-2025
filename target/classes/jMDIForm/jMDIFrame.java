@@ -1672,7 +1672,7 @@ public class jMDIFrame extends JInternalFrame {
 //        удаление выделеного объекта и связей с ним              
         ArrayList<Integer> array = new ArrayList();
         for (Line ln : lines) {
-            if ((ln.getID1() == all.get(0).getNameF()) || (ln.getID2() == all.get(0).getNameF())) {
+            if ((ln.getID1().equals(all.get(0).getNameF())) || (ln.getID2().equals(all.get(0).getNameF()))) {
                 array.add(lines.indexOf(ln));
             }
         }
